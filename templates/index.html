@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero" id="top">
+  <p class="eyebrow">A collection of letters</p>
+  <h1>A Little Journey<br>to July 23 <span>♥</span></h1>
+  <p class="hero-copy">Made for Toyintomatoo — one page, one smile, one memory at a time.</p>
+  <a class="primary-button" href="#journey">Open the journal <span>↓</span></a>
+  <button class="music-toggle" type="button" data-music-toggle aria-pressed="false">♪ Sound off</button>
+  <!-- Add static/music/theme.mp3 when ready. -->
+  <audio id="themeMusic" loop preload="none"><source src="{{ url_for('static', filename='music/theme.mp3') }}" type="audio/mpeg"></audio>
+</section>
+
+<section class="journey" id="journey">
+  <div class="section-heading">
+    <p class="eyebrow ink">The journal</p>
+    <h2>Pages waiting for you</h2>
+    {% if next_unlock %}
+      <p class="next-note">The next page opens <strong>{{ next_unlock.date_label }}</strong> · {{ timezone_name }}</p>
+      <p class="countdown" data-countdown data-unlock="{{ next_unlock.unlock_at.isoformat() }}">Calculating time…</p>
+    {% else %}
+      <p class="next-note">Every page is open. Enjoy the whole journey. ❤️</p>
+    {% endif %}
+  </div>
+
+  <nav class="chapter-nav" aria-label="Journey chapters">
+    {% for chapter in chapters %}
+      <a href="#{{ chapter.id }}" class="chapter-dot {% if chapter.unlocked %}open{% else %}locked{% endif %}" {% if not chapter.unlocked %}aria-disabled="true"{% endif %}>
+        <span>{{ loop.index }}</span><small>{{ "Open" if chapter.unlocked else "Locked" }}</small>
+      </a>
+    {% endfor %}
+  </nav>
+
+  {% for chapter in chapters %}
+    <article class="chapter {% if not chapter.unlocked %}is-locked{% endif %}" id="{{ chapter.id }}">
+      {% if chapter.unlocked %}
+        <div class="paper">
+          <div class="pressed-flower" aria-hidden="true">{{ chapter.flower }}</div>
+          <p class="chapter-date">{{ chapter.date_label }}</p>
+          <h2>{{ chapter.title }}</h2>
+
+          {% if chapter.kind == "letter" %}
+            <div class="letter-lines" data-reveal-lines>
+              {% for line in chapter.lines %}<p>{{ line }}</p>{% endfor %}
+            </div>
+            <figure class="polaroid">
+              <img src="{{ url_for('static', filename=chapter.photo) }}" alt="A special memory" onerror="this.parentElement.classList.add('missing-media')">
+              <figcaption>{{ chapter.caption }}</figcaption>
+            </figure>
+
+          {% elif chapter.kind == "puzzle" %}
+            <div class="letter-lines" data-reveal-lines>{% for line in chapter.lines %}<p>{{ line }}</p>{% endfor %}</div>
+            <div class="puzzle" data-puzzle>
+              <div class="puzzle-row"><label for="word1">O M A T O T <small>— a nickname clue</small></label><input id="word1" data-answer="TOMATOO" autocomplete="off"></div>
+              <div class="puzzle-row"><label for="word2">Y L U J <small>— the birthday month</small></label><input id="word2" data-answer="JULY" autocomplete="off"></div>
+              <div class="puzzle-row"><label for="word3">D O O F <small>— one thing you love</small></label><input id="word3" data-answer="FOOD" autocomplete="off"></div>
+              <div class="puzzle-row"><label for="word4">E L I M S <small>— something you give easily</small></label><input id="word4" data-answer="SMILE" autocomplete="off"></div>
+              <div class="puzzle-row"><label for="word5">T R A E H <small>— this one is easy</small></label><input id="word5" data-answer="HEART" autocomplete="off"></div>
+              <button class="ink-button" type="button" data-check-puzzle>Check my answers</button>
+              <p class="puzzle-result" data-puzzle-result aria-live="polite"></p>
+            </div>
+            <div class="mini-scrapbook">
+              <p class="scrapbook-intro">A few small keepsakes for the memory book.</p>
+              <div class="scrapbook-grid">
+                {% for photo, caption in [('images/scrapbook-1.jpeg', 'A little moment I wanted to keep.'), ('images/scrapbook-2.jpeg', 'You make ordinary days feel brighter.'), ('images/scrapbook-3.jpeg', 'For the memory book.')] %}
+                <figure class="scrap-photo"><img src="{{ url_for('static', filename=photo) }}" alt="A scrapbook memory" onerror="this.parentElement.classList.add('missing-media')"><figcaption>{{ caption }}</figcaption></figure>
+                {% endfor %}
+              </div>
+            </div>
+
+          {% elif chapter.kind == "scrapbook" %}
+            <div class="letter-lines" data-reveal-lines>{% for line in chapter.lines %}<p>{{ line }}</p>{% endfor %}</div>
+            <div class="scrapbook-grid">
+              {% for photo, caption in [('images/scrapbook-1.jpeg', 'A little moment I wanted to keep.'), ('images/scrapbook-2.jpeg', 'You make ordinary days feel brighter.'), ('images/scrapbook-3.jpeg', 'For the memory book.')] %}
+              <figure class="scrap-photo"><img src="{{ url_for('static', filename=photo) }}" alt="A scrapbook memory" onerror="this.parentElement.classList.add('missing-media')"><figcaption>{{ caption }}</figcaption></figure>
+              {% endfor %}
+            </div>
+
+          {% elif chapter.kind == "video" %}
+            <div class="letter-lines" data-reveal-lines>{% for line in chapter.lines %}<p>{{ line }}</p>{% endfor %}</div>
+            <div class="video-card">
+              <video controls preload="metadata" poster="{{ url_for('static', filename='images/video-cover.jpeg') }}">
+                <source src="{{ url_for('static', filename='videos/message.mp4') }}" type="video/mp4">
+                Your browser does not support video playback.
+              </video>
+              <p>Replace <code>static/videos/message.mp4</code> with your personal video.</p>
+            </div>
+
+          {% elif chapter.kind == "birthday" %}
+            <div class="birthday-banner"><span>🎉</span><span>🎂</span><span>✨</span></div>
+            <div class="letter-lines" data-reveal-lines>{% for line in chapter.lines %}<p>{{ line }}</p>{% endfor %}</div>
+            <button class="ink-button celebration-button" type="button" data-confetti>Make a wish ✨</button>
+            <div class="birthday-collage">
+              <img src="{{ url_for('static', filename='images/finale.jpeg') }}" alt="A birthday memory" onerror="this.classList.add('missing-media')">
+            </div>
+            <div class="video-card">
+              <video controls preload="metadata" poster="{{ url_for('static', filename='images/video-cover.jpeg') }}">
+                <source src="{{ url_for('static', filename='videos/message.mp4') }}" type="video/mp4">
+                Your browser does not support video playback.
+              </video>
+              <p>Your final birthday video goes here.</p>
+            </div>
+          {% endif %}
+          <div class="wax-seal" title="Project Tomato">🍅</div>
+        </div>
+      {% else %}
+        <div class="locked-paper">
+          <span>✉</span><h2>This page is sealed</h2><p>It opens {{ chapter.date_label }}.</p>
+        </div>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+
+<footer>Made with care for Toyintomatoo · <a href="#top">Back to the stars ↑</a></footer>
+{% endblock %}
